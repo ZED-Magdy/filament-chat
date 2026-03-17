@@ -73,6 +73,24 @@ This gives your User model these relationships:
 
 ### 2. Create a Chat Source
 
+The quickest way is with the Artisan command:
+
+```bash
+# Interactive (prompts for name and model)
+php artisan make:chat-source
+
+# Non-interactive
+php artisan make:chat-source Staff --model=User
+```
+
+This generates two files:
+- `app/Chat/StaffChatSource.php` — the chat source class
+- `app/Filament/Pages/StaffChatPage.php` — the Filament page
+
+Then skip to [step 4](#4-register-the-plugin-in-your-panel) to register it.
+
+#### Manual setup
+
 A chat source defines a category of chat (e.g. staff-to-staff, patient support). Create one class per source:
 
 ```php
