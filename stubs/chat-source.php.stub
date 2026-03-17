@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ pageClass }};
+use {{ participantModel }};
+use ZEDMagdy\FilamentChat\ChatSource;
+
+class {{ class }} extends ChatSource
+{
+    public function getKey(): string
+    {
+        return '{{ key }}';
+    }
+
+    public function getLabel(): string
+    {
+        return '{{ label }}';
+    }
+
+    public function getIcon(): string
+    {
+        return 'heroicon-o-chat-bubble-left-right';
+    }
+
+    public function getParticipantModel(): string
+    {
+        return {{ participantModelBasename }}::class;
+    }
+
+    public function getPageClass(): string
+    {
+        return {{ pageBasename }}::class;
+    }
+}

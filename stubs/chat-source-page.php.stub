@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use ZEDMagdy\FilamentChat\Pages\ChatSourcePage;
+
+class {{ class }} extends ChatSourcePage
+{
+    protected static string $chatSourceKey = '{{ key }}';
+}
