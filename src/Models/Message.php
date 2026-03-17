@@ -8,10 +8,26 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use ZEDMagdy\FilamentChat\FilamentChat;
 
+/**
+ * @property int $id
+ * @property int $conversation_id
+ * @property int|null $senderable_id
+ * @property string|null $senderable_type
+ * @property string|null $body
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Conversation $conversation
+ * @property-read Model|null $senderable
+ * @property-read MediaCollection<int, Media> $media
+ */
 class Message extends Model implements HasMedia
 {
     use HasFactory;

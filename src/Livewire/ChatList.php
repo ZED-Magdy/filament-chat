@@ -62,6 +62,6 @@ class ChatList extends Component
 
     public function render(): View
     {
-        return view('filament-chat::livewire.chat-list');
+        return view('filament-chat::livewire.chat-list'); // @phpstan-ignore argument.type
     }
 }

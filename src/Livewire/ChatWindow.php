@@ -103,6 +103,6 @@ class ChatWindow extends Component
 
     public function render(): View
     {
-        return view('filament-chat::livewire.chat-window');
+        return view('filament-chat::livewire.chat-window'); // @phpstan-ignore argument.type
     }
 }

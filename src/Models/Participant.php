@@ -8,8 +8,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 use ZEDMagdy\FilamentChat\FilamentChat;
 
+/**
+ * @property int $id
+ * @property int $conversation_id
+ * @property int $participantable_id
+ * @property string $participantable_type
+ * @property string $role
+ * @property Carbon|null $last_read_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Conversation $conversation
+ * @property-read Model $participantable
+ */
 class Participant extends Model
 {
     use HasFactory;

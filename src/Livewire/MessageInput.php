@@ -8,12 +8,15 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use ZEDMagdy\FilamentChat\Events\MessageSent;
 use ZEDMagdy\FilamentChat\FilamentChat;
 
+/**
+ * @property Schema $form
+ */
 class MessageInput extends Component implements HasForms
 {
     use InteractsWithForms;
@@ -28,7 +31,7 @@ class MessageInput extends Component implements HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $form): Schema
     {
         return $form
             ->schema([
@@ -98,6 +101,6 @@ class MessageInput extends Component implements HasForms
 
     public function render(): View
     {
-        return view('filament-chat::livewire.message-input');
+        return view('filament-chat::livewire.message-input'); // @phpstan-ignore argument.type
     }
 }

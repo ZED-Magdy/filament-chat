@@ -5,11 +5,25 @@ declare(strict_types=1);
 namespace ZEDMagdy\FilamentChat\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use ZEDMagdy\FilamentChat\FilamentChat;
 
+/**
+ * @property int $id
+ * @property string $source
+ * @property string $type
+ * @property string|null $name
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, Message> $messages
+ * @property-read Collection<int, Participant> $participants
+ * @property-read Collection<int, Message> $latestMessage
+ */
 class Conversation extends Model
 {
     use HasFactory;
@@ -91,8 +105,12 @@ class Conversation extends Model
 
     public function getOtherParticipant(Model $user): ?Participant
     {
+        /** @var Participant|null */
         return $this->participants
-            ->first(fn (Participant $p): bool => $p->participantable_id !== $user->getKey()
-                || $p->participantable_type !== $user->getMorphClass());
+            ->first(function (Model $p) use ($user): bool {
+                /** @var Participant $p */
+                return $p->participantable_id !== $user->getKey()
+                    || $p->participantable_type !== $user->getMorphClass();
+            });
     }
 }
