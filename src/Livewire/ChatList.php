@@ -16,6 +16,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use ZEDMagdy\FilamentChat\ChatSource;
 use ZEDMagdy\FilamentChat\Events\ConversationCreated;
@@ -33,6 +34,13 @@ class ChatList extends Component implements HasActions, HasForms
 
     public ?int $selectedConversationId = null;
 
+    #[On('chat-search-updated')]
+    public function updateSearch(string $search): void
+    {
+        $this->search = $search;
+        unset($this->conversations);
+    }
+
     public function selectConversation(int $conversationId): void
     {
         $this->selectedConversationId = $conversationId;
@@ -46,7 +54,9 @@ class ChatList extends Component implements HasActions, HasForms
         return Action::make('newConversation')
             ->label('New Chat')
             ->icon('heroicon-o-plus')
-            ->size('sm')
+            ->iconButton()
+            ->size('md')
+            ->tooltip('New Chat')
             ->modalHeading('Start a Conversation')
             ->modalWidth('md')
             ->schema(function () use ($source): array {

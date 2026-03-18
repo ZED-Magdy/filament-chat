@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZEDMagdy\FilamentChat\Livewire;
 
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
@@ -26,22 +26,27 @@ class MessageInput extends Component implements HasForms
     /** @var array<string, mixed> */
     public ?array $data = [];
 
+    public bool $showAttachments = false;
+
     public function mount(): void
     {
         $this->form->fill();
+    }
+
+    public function toggleAttachments(): void
+    {
+        $this->showAttachments = ! $this->showAttachments;
     }
 
     public function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Textarea::make('body')
+                TextInput::make('body')
                     ->hiddenLabel()
                     ->placeholder('Type a message...')
-                    ->rows(1)
-                    ->autosize()
                     ->extraInputAttributes([
-                        'onkeydown' => "if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); \$wire.sendMessage(); }",
+                        'class' => 'border-0 bg-transparent ring-0 focus:ring-0 shadow-none',
                     ]),
                 SpatieMediaLibraryFileUpload::make('attachments')
                     ->hiddenLabel()
@@ -53,7 +58,9 @@ class MessageInput extends Component implements HasForms
                     ->acceptedFileTypes(config('filament-chat.attachments.accepted_types', []))
                     ->reorderable(false)
                     ->openable()
-                    ->previewable(),
+                    ->previewable()
+                    ->panelLayout('compact')
+                    ->visible(fn (): bool => $this->showAttachments),
             ])
             ->statePath('data');
     }

@@ -1,15 +1,9 @@
-<div class="flex h-full flex-col">
+<div class="flex h-full w-full flex-col">
     {{-- Header --}}
-    <div class="flex items-center gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
-        <div class="flex-1">
-            <x-filament::input.wrapper>
-                <x-filament::input
-                    type="text"
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="Search conversations..."
-                />
-            </x-filament::input.wrapper>
-        </div>
+    <div class="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-gray-700">
+        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            Recent Interactions
+        </p>
 
         @if ($this->canCreateConversation())
             {{ $this->newConversationAction }}
@@ -25,10 +19,10 @@
                 :source="$this->getSource()"
             />
         @empty
-            <div class="flex flex-col items-center justify-center gap-3 p-8 text-sm text-gray-500 dark:text-gray-400">
+            <div class="flex flex-col items-center justify-center gap-2 p-8 text-sm text-gray-500 dark:text-gray-400">
                 <p>No conversations yet.</p>
                 @if ($this->canCreateConversation())
-                    <p class="text-xs">Click the + button to start one.</p>
+                    <p class="text-xs">Click + to start one.</p>
                 @endif
             </div>
         @endforelse

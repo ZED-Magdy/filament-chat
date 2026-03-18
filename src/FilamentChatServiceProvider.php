@@ -9,6 +9,7 @@ use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use ZEDMagdy\FilamentChat\Commands\MakeChatSourceCommand;
 use ZEDMagdy\FilamentChat\Livewire\ChatList;
+use ZEDMagdy\FilamentChat\Livewire\ChatSearch;
 use ZEDMagdy\FilamentChat\Livewire\ChatWindow;
 use ZEDMagdy\FilamentChat\Livewire\MessageInput;
 
@@ -32,6 +33,7 @@ class FilamentChatServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        Livewire::component('filament-chat::chat-search', ChatSearch::class);
         Livewire::component('filament-chat::chat-list', ChatList::class);
         Livewire::component('filament-chat::chat-window', ChatWindow::class);
         Livewire::component('filament-chat::message-input', MessageInput::class);
