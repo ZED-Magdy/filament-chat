@@ -39,7 +39,45 @@ it('requires implementation of abstract methods', function (): void {
         ->and($source->getIcon())->toBe('heroicon-o-chat-bubble-left')
         ->and($source->getSlug())->toBe('chat/test')
         ->and($source->allowsGroupChats())->toBeFalse()
+        ->and($source->allowsNewConversations())->toBeTrue()
         ->and($source->getNavigationGroup())->toBe('Chat');
+});
+
+it('can disable new conversations', function (): void {
+    $source = new class extends ChatSource
+    {
+        public function getKey(): string
+        {
+            return 'readonly';
+        }
+
+        public function getLabel(): string
+        {
+            return 'Read Only';
+        }
+
+        public function getIcon(): string
+        {
+            return 'heroicon-o-eye';
+        }
+
+        public function getParticipantModel(): string
+        {
+            return User::class;
+        }
+
+        public function getPageClass(): string
+        {
+            return 'TestPage';
+        }
+
+        public function allowsNewConversations(): bool
+        {
+            return false;
+        }
+    };
+
+    expect($source->allowsNewConversations())->toBeFalse();
 });
 
 it('provides default participant display name', function (): void {

@@ -128,13 +128,19 @@ class StaffChatSource extends ChatSource
         return StaffChatPage::class;
     }
 
-    // Optional: filter which users can be added to conversations
+    // Optional: filter which users can be added to new conversations
     public function getAvailableParticipantsQuery(): Builder
     {
         return User::query()->where('role', 'staff');
     }
 
-    // Optional: enable group chats for this source
+    // Optional: allow users to create new conversations (default: true)
+    public function allowsNewConversations(): bool
+    {
+        return true;
+    }
+
+    // Optional: enable group chats for this source (default: false)
     public function allowsGroupChats(): bool
     {
         return true;
@@ -276,7 +282,29 @@ Register both in your panel:
 )
 ```
 
-### 6. Creating Conversations Programmatically
+### 6. Creating Conversations from the UI
+
+Users can start new conversations by clicking the **+** button in the chat sidebar. This opens a modal where they select a participant (or multiple for group chats).
+
+**Behavior:**
+- **Direct chats:** If a conversation already exists between the two users in the same source, it opens the existing one instead of creating a duplicate.
+- **Group chats:** Only available if `allowsGroupChats()` returns `true`. Users provide a group name and select multiple participants.
+- **Participant list:** Filtered by `getAvailableParticipantsQuery()` — the current user is excluded automatically.
+
+**Disabling conversation creation:**
+
+Override `allowsNewConversations()` in your chat source to hide the button:
+
+```php
+public function allowsNewConversations(): bool
+{
+    return false; // Users can only see existing conversations
+}
+```
+
+This is useful for system-managed chats where conversations are created programmatically (e.g. a support ticket system that auto-creates a chat per ticket).
+
+### 7. Creating Conversations Programmatically
 
 ```php
 use ZEDMagdy\FilamentChat\Models\Conversation;
@@ -324,7 +352,7 @@ Message::create([
 ]);
 ```
 
-### 7. Working with Attachments
+### 8. Working with Attachments
 
 The `Message` model uses Spatie Media Library. Attachments are stored in the `chat-attachments` media collection:
 

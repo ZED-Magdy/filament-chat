@@ -34,6 +34,11 @@ abstract class ChatSource
         return $this->getParticipantModel()::query();
     }
 
+    public function allowsNewConversations(): bool
+    {
+        return true;
+    }
+
     public function allowsGroupChats(): bool
     {
         return false;
