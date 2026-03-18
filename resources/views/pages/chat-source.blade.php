@@ -1,4 +1,23 @@
 <x-filament-panels::page :fullHeight="true">
+    <style>
+        .fi-page.fi-height-full {
+            height: 100%;
+        }
+        .fi-page.fi-height-full .fi-page-header-main-ctn {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .fi-page.fi-height-full .fi-page-main {
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+        }
+        .fi-page.fi-height-full .fi-page-content {
+            height: 100%;
+        }
+    </style>
+
     <div class="filament-chat-container flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
         {{-- Top Search Bar --}}
         <div class="shrink-0 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
