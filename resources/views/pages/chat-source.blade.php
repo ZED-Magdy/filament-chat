@@ -1,20 +1,22 @@
 <x-filament-panels::page :fullHeight="true">
     <style>
-        .fi-page.fi-height-full {
-            height: 100%;
+        /* Force full viewport height through the Filament layout chain.
+           Filament uses min-h-dvh on parents, but h-full on children
+           needs an explicit height to resolve against. */
+        .fi-body {
+            height: 100dvh;
+        }
+        .fi-main-ctn {
+            height: calc(100dvh - 4rem);
         }
         .fi-page.fi-height-full .fi-page-header-main-ctn {
-            height: 100%;
             display: flex;
             flex-direction: column;
-        }
-        .fi-page.fi-height-full .fi-page-main {
-            flex: 1;
-            min-height: 0;
-            height: 100%;
+            overflow: hidden;
         }
         .fi-page.fi-height-full .fi-page-content {
-            height: 100%;
+            flex: 1;
+            min-height: 0;
         }
     </style>
 
