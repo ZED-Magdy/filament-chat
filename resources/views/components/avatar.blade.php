@@ -16,7 +16,7 @@
 @else
     <div
         {{ $attributes->merge(['class' => 'flex items-center justify-center rounded-full text-xs font-bold text-white']) }}
-        style="background-color: rgb(var(--primary-600));"
+        style="background-color: var(--primary-600);"
     >
         {{ $initials ?: '?' }}
     </div>

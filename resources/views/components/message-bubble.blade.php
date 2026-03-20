@@ -17,7 +17,7 @@
         @if ($isSent)
             <div
                 class="max-w-[70%] rounded-2xl px-4 py-2.5 text-white shadow-sm"
-                style="background-color: rgb(var(--primary-600));"
+                style="background-color: var(--primary-600);"
             >
                 @if ($message->body)
                     <p class="text-sm whitespace-pre-wrap break-words">{{ $message->body }}</p>
