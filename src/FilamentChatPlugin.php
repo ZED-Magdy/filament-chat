@@ -19,10 +19,25 @@ class FilamentChatPlugin implements Plugin
 
     public static function get(): static
     {
-        /** @var static $plugin */
-        $plugin = filament(app(static::class)->getId());
+        $id = app(static::class)->getId();
 
-        return $plugin;
+        try {
+            /** @var static $plugin */
+            $plugin = filament($id);
+
+            return $plugin;
+        } catch (\LogicException $e) {
+            foreach (filament()->getPanels() as $panel) {
+                if ($panel->hasPlugin($id)) {
+                    /** @var static $plugin */
+                    $plugin = $panel->getPlugin($id);
+
+                    return $plugin;
+                }
+            }
+
+            throw $e;
+        }
     }
 
     public function getId(): string
