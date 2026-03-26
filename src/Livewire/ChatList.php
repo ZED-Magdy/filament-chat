@@ -61,10 +61,14 @@ class ChatList extends Component implements HasActions, HasForms
             ->modalWidth('md')
             ->schema(function () use ($source): array {
                 $user = filament()->auth()->user();
-                $participantOptions = $source->getAvailableParticipantsQuery()
-                    ->where(function ($q) use ($user): void {
-                        $q->where('id', '!=', $user->getKey());
-                    })
+                $participantModel = $source->getParticipantModel();
+                $participantQuery = $source->getAvailableParticipantsQuery();
+
+                if ($user instanceof $participantModel) {
+                    $participantQuery->where('id', '!=', $user->getKey());
+                }
+
+                $participantOptions = $participantQuery
                     ->get()
                     ->mapWithKeys(fn ($p) => [
                         $p->getKey() => $source->getParticipantDisplayName($p),
