@@ -1,9 +1,26 @@
-<div class="w-full px-4 py-3">
+<div
+    class="w-full px-4 py-3"
+    x-data="{
+        send() {
+            const input = this.$el.querySelector('[data-chat-body]');
+            const body = input ? input.value.trim() : '';
+            if (body) {
+                this.$dispatch('optimistic-message', { body });
+            }
+            $wire.sendMessage();
+        }
+    }"
+    @keydown.enter.prevent="
+        const input = this.$el.querySelector('[data-chat-body]');
+        if ($event.target === input && !$event.shiftKey) send();
+    "
+>
     <div class="flex items-end gap-3">
         {{-- Paperclip button --}}
         <button
             type="button"
             wire:click="toggleAttachments"
+            aria-label="Toggle attachments"
             class="mb-2 shrink-0 transition-colors {{ $showAttachments ? 'opacity-100' : 'opacity-40 hover:opacity-70' }}"
             style="color: var(--primary-600);"
         >
@@ -18,7 +35,8 @@
         {{-- Send button --}}
         <button
             type="button"
-            wire:click="sendMessage"
+            @click="send()"
+            aria-label="Send message"
             class="mb-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-90"
             style="background-color: var(--primary-600);"
         >
