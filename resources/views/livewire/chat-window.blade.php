@@ -12,6 +12,7 @@
             $avatarUrl = (! $this->conversation->isGroup() && $otherParticipant)
                 ? $source->getParticipantAvatarUrl($otherParticipant->participantable)
                 : null;
+            $othersLastReadAt = $this->othersLastReadAt;
         @endphp
 
         {{-- Header --}}
@@ -26,14 +27,32 @@
         {{-- Messages --}}
         <div
             class="flex-1 overflow-y-auto"
+            role="log"
+            aria-label="Conversation messages"
+            aria-live="polite"
+            aria-relevant="additions"
             style="background-image: radial-gradient(circle, rgb(209 213 219 / 0.6) 1px, transparent 1px); background-size: 16px 16px;"
             x-data="{
+                optimisticMessages: [],
                 scrollToBottom() {
                     this.$el.scrollTop = this.$el.scrollHeight;
+                },
+                addOptimistic(body) {
+                    const now = new Date();
+                    this.optimisticMessages.push({
+                        body: body,
+                        time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                        key: now.getTime()
+                    });
+                    this.$nextTick(() => this.scrollToBottom());
+                },
+                clearOptimistic() {
+                    this.optimisticMessages = [];
                 }
             }"
             x-init="scrollToBottom()"
-            @message-sent.window="$nextTick(() => scrollToBottom())"
+            @optimistic-message.window="addOptimistic($event.detail.body)"
+            @message-sent.window="clearOptimistic(); $nextTick(() => scrollToBottom())"
             @if ($this->isPollingMode())
                 wire:poll.{{ $this->getPollingInterval() }}="refreshMessages"
             @endif
@@ -42,8 +61,10 @@
                 <div
                     x-data
                     x-init="
-                        Echo.private('chat.conversation.{{ $this->conversationId }}')
-                            .listen('MessageSent', () => $wire.refreshMessages());
+                        if (typeof window.Echo !== 'undefined') {
+                            Echo.private('chat.conversation.{{ $this->conversationId }}')
+                                .listen('MessageSent', () => $wire.refreshMessages());
+                        }
                     "
                     class="hidden"
                 ></div>
@@ -54,6 +75,7 @@
                     <div class="text-center">
                         <button
                             wire:click="loadMore"
+                            aria-label="Load earlier messages"
                             class="rounded-full bg-white px-3 py-1 text-xs text-gray-500 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400"
                         >
                             Load earlier messages
@@ -66,7 +88,7 @@
                 @foreach ($this->messages as $message)
                     @php $messageDate = $message->created_at->format('Y-m-d'); @endphp
                     @if ($messageDate !== $lastDate)
-                        <div class="flex items-center justify-center py-2">
+                        <div class="flex items-center justify-center py-2" role="separator" aria-label="{{ $message->created_at->isToday() ? 'Today' : ($message->created_at->isYesterday() ? 'Yesterday' : $message->created_at->format('M d, Y')) }}">
                             <span class="rounded-full bg-white px-4 py-1 text-xs font-medium text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
                                 {{ $message->created_at->isToday() ? 'Today' : ($message->created_at->isYesterday() ? 'Yesterday' : $message->created_at->format('M d, Y')) }}
                             </span>
@@ -78,8 +100,28 @@
                         :message="$message"
                         :is-sent="$message->isSentBy($user)"
                         :source="$source"
+                        :is-read="$othersLastReadAt !== null && $message->created_at->lte($othersLastReadAt)"
                     />
                 @endforeach
+
+                {{-- Optimistic (pending) messages --}}
+                <template x-for="msg in optimisticMessages" :key="msg.key">
+                    <div class="flex flex-col items-end">
+                        <div
+                            class="max-w-[70%] rounded-2xl px-4 py-2.5 text-white shadow-sm opacity-75"
+                            style="background-color: var(--primary-600);"
+                        >
+                            <p class="text-sm whitespace-pre-wrap break-words" x-text="msg.body"></p>
+                        </div>
+                        <p class="mt-1 px-1 text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                            <span x-text="msg.time"></span>
+                            {{-- Clock / sending indicator --}}
+                            <svg class="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                        </p>
+                    </div>
+                </template>
             </div>
         </div>
 
@@ -94,7 +136,7 @@
             style="background-image: radial-gradient(circle, rgb(209 213 219 / 0.6) 1px, transparent 1px); background-size: 16px 16px;"
         >
             <div class="rounded-xl bg-white/90 px-8 py-6 text-center shadow-sm dark:bg-gray-800/90">
-                <svg class="mx-auto mb-3 h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
+                <svg class="mx-auto mb-3 h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Select a conversation to start chatting</p>
             </div>
         </div>

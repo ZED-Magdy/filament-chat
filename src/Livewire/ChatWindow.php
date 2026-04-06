@@ -7,6 +7,7 @@ namespace ZEDMagdy\FilamentChat\Livewire;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -35,9 +36,11 @@ class ChatWindow extends Component
         $this->page++;
     }
 
+    #[On('message-sent')]
     public function refreshMessages(): void
     {
         unset($this->messages);
+        unset($this->othersLastReadAt);
         $this->markAsRead();
     }
 
@@ -69,6 +72,27 @@ class ChatWindow extends Component
             ->get()
             ->reverse()
             ->values();
+    }
+
+    #[Computed]
+    public function othersLastReadAt(): ?Carbon
+    {
+        if (! $this->conversationId) {
+            return null;
+        }
+
+        $user = filament()->auth()->user();
+
+        $minLastRead = FilamentChat::getParticipantModel()::query()
+            ->where('conversation_id', $this->conversationId)
+            ->where(function ($q) use ($user): void {
+                $q->where('participantable_id', '!=', $user->getKey())
+                    ->orWhere('participantable_type', '!=', $user->getMorphClass());
+            })
+            ->whereNotNull('last_read_at')
+            ->min('last_read_at');
+
+        return $minLastRead ? Carbon::parse($minLastRead) : null;
     }
 
     public function markAsRead(): void

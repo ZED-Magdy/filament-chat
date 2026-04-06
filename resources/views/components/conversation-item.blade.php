@@ -15,6 +15,8 @@
 
 <button
     wire:click="selectConversation({{ $conversation->id }})"
+    aria-label="Open conversation with {{ $displayName }}"
+    aria-pressed="{{ $selected ? 'true' : 'false' }}"
     class="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 {{ $selected ? 'bg-gray-50 dark:bg-gray-800' : '' }}"
     style="{{ $selected ? 'border-inline-start: 4px solid var(--primary-600); padding-inline-start: 12px;' : 'border-inline-start: 4px solid transparent;' }}"
 >
@@ -33,9 +35,9 @@
                 {{ $displayName }}
             </p>
             @if ($lastMessage)
-                <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">
+                <time datetime="{{ $lastMessage->created_at->toIso8601String() }}" class="shrink-0 text-xs text-gray-400 dark:text-gray-500">
                     {{ $lastMessage->created_at->shortRelativeDiffForHumans() }}
-                </span>
+                </time>
             @endif
         </div>
         <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">

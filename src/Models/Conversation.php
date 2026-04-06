@@ -72,20 +72,21 @@ class Conversation extends Model
 
     public function scopeWithUnreadCount(Builder $query, Model $user): Builder
     {
-        $prefix = FilamentChat::getTablePrefix();
+        $messagesTable = (new (FilamentChat::getMessageModel()))->getTable();
+        $participantsTable = (new (FilamentChat::getParticipantModel()))->getTable();
 
         return $query->withCount([
-            'messages as unread_count' => function (Builder $q) use ($user, $prefix): void {
+            'messages as unread_count' => function (Builder $q) use ($user, $messagesTable, $participantsTable): void {
                 $q->whereHas('conversation.participants', function (Builder $pq) use ($user): void {
                     $pq->where('participantable_id', $user->getKey())
                         ->where('participantable_type', $user->getMorphClass());
-                })->where(function (Builder $q) use ($user, $prefix): void {
+                })->where(function (Builder $q) use ($user, $messagesTable, $participantsTable): void {
                     $q->whereRaw(
-                        "{$prefix}messages.created_at > (SELECT last_read_at FROM {$prefix}participants WHERE conversation_id = {$prefix}messages.conversation_id AND participantable_id = ? AND participantable_type = ? LIMIT 1)",
+                        "{$messagesTable}.created_at > (SELECT last_read_at FROM {$participantsTable} WHERE conversation_id = {$messagesTable}.conversation_id AND participantable_id = ? AND participantable_type = ? LIMIT 1)",
                         [$user->getKey(), $user->getMorphClass()],
                     )
                         ->orWhereRaw(
-                            "(SELECT last_read_at FROM {$prefix}participants WHERE conversation_id = {$prefix}messages.conversation_id AND participantable_id = ? AND participantable_type = ? LIMIT 1) IS NULL",
+                            "(SELECT last_read_at FROM {$participantsTable} WHERE conversation_id = {$messagesTable}.conversation_id AND participantable_id = ? AND participantable_type = ? LIMIT 1) IS NULL",
                             [$user->getKey(), $user->getMorphClass()],
                         );
                 });

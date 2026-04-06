@@ -11,15 +11,17 @@
     </div>
 
     {{-- Conversation List --}}
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto" role="list" aria-label="Conversations">
         @forelse ($this->conversations as $conversation)
-            <x-filament-chat::conversation-item
-                :conversation="$conversation"
-                :selected="$selectedConversationId === $conversation->id"
-                :source="$this->getSource()"
-            />
+            <div role="listitem">
+                <x-filament-chat::conversation-item
+                    :conversation="$conversation"
+                    :selected="$selectedConversationId === $conversation->id"
+                    :source="$this->getSource()"
+                />
+            </div>
         @empty
-            <div class="flex flex-col items-center justify-center gap-2 p-8 text-sm text-gray-500 dark:text-gray-400">
+            <div class="flex flex-col items-center justify-center gap-2 p-8 text-sm text-gray-500 dark:text-gray-400" role="status">
                 <p>No conversations yet.</p>
                 @if ($this->canCreateConversation())
                     <p class="text-xs">Click + to start one.</p>

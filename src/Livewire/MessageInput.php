@@ -8,8 +8,10 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use ZEDMagdy\FilamentChat\Events\MessageSent;
 use ZEDMagdy\FilamentChat\FilamentChat;
@@ -47,6 +49,7 @@ class MessageInput extends Component implements HasForms
                     ->placeholder('Type a message...')
                     ->extraInputAttributes([
                         'class' => 'border-0 bg-transparent ring-0 focus:ring-0 shadow-none',
+                        'data-chat-body' => 'true',
                     ]),
                 SpatieMediaLibraryFileUpload::make('attachments')
                     ->hiddenLabel()
@@ -79,28 +82,42 @@ class MessageInput extends Component implements HasForms
 
         $user = filament()->auth()->user();
 
-        $message = FilamentChat::getMessageModel()::create([
-            'conversation_id' => $this->conversationId,
-            'senderable_id' => $user->getKey(),
-            'senderable_type' => $user->getMorphClass(),
-            'body' => $data['body'] ?? null,
-        ]);
+        try {
+            DB::transaction(function () use ($data, $user): void {
+                $message = FilamentChat::getMessageModel()::create([
+                    'conversation_id' => $this->conversationId,
+                    'senderable_id' => $user->getKey(),
+                    'senderable_type' => $user->getMorphClass(),
+                    'body' => $data['body'] ?? null,
+                ]);
 
-        // Save media attachments
-        $this->form->model($message)->saveRelationships();
+                // Save media attachments
+                $this->form->model($message)->saveRelationships();
 
-        // Update conversation timestamp
-        FilamentChat::getConversationModel()::where('id', $this->conversationId)
-            ->update(['updated_at' => now()]);
+                // Update conversation timestamp
+                FilamentChat::getConversationModel()::where('id', $this->conversationId)
+                    ->update(['updated_at' => now()]);
 
-        // Mark as read for sender
-        FilamentChat::getParticipantModel()::query()
-            ->where('conversation_id', $this->conversationId)
-            ->where('participantable_id', $user->getKey())
-            ->where('participantable_type', $user->getMorphClass())
-            ->update(['last_read_at' => now()]);
+                // Mark as read for sender
+                FilamentChat::getParticipantModel()::query()
+                    ->where('conversation_id', $this->conversationId)
+                    ->where('participantable_id', $user->getKey())
+                    ->where('participantable_type', $user->getMorphClass())
+                    ->update(['last_read_at' => now()]);
 
-        event(new MessageSent($message));
+                event(new MessageSent($message));
+            });
+        } catch (\Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->title('Failed to send message')
+                ->body('Something went wrong. Please try again.')
+                ->danger()
+                ->send();
+
+            return;
+        }
 
         $this->form->fill();
         $this->dispatch('message-sent');
