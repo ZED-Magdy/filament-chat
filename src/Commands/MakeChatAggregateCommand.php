@@ -53,6 +53,10 @@ class MakeChatAggregateCommand extends Command
             ->values()
             ->all();
 
+        if ($sourceKeys === []) {
+            $this->components->warn('No source keys provided; the generated aggregate will list no sources. Edit getSourceKeys() to add them.');
+        }
+
         $sourceKeysCode = collect($sourceKeys)
             ->map(fn (string $value): string => "'".$value."'")
             ->implode(', ');
