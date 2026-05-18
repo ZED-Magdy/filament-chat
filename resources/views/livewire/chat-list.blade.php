@@ -17,7 +17,8 @@
                 <x-filament-chat::conversation-item
                     :conversation="$conversation"
                     :selected="$selectedConversationId === $conversation->id"
-                    :source="$this->getSource()"
+                    :source="$this->sourceFor($conversation->source)"
+                    :show-source-badge="count($sourceKeys) > 1"
                 />
             </div>
         @empty

@@ -9,7 +9,8 @@ use Livewire\Component;
 
 class ChatSearch extends Component
 {
-    public string $sourceKey = '';
+    /** @var array<int, string> */
+    public array $sourceKeys = [];
 
     public string $search = '';
 
