@@ -28,7 +28,8 @@ class ChatList extends Component implements HasActions, HasForms
     use InteractsWithActions;
     use InteractsWithForms;
 
-    public string $sourceKey = '';
+    /** @var array<int, string> */
+    public array $sourceKeys = [];
 
     public string $search = '';
 
@@ -202,20 +203,28 @@ class ChatList extends Component implements HasActions, HasForms
         $conversationModel = FilamentChat::getConversationModel();
 
         $query = $conversationModel::query()
-            ->forSource($this->sourceKey)
+            ->forSources($this->sourceKeys)
             ->forParticipant($user)
             ->withUnreadCount($user)
             ->with(['participants.participantable', 'latestMessage'])
             ->latest('updated_at');
 
         if (filled($this->search)) {
-            $source = FilamentChatPlugin::get()->getSource($this->sourceKey);
+            $plugin = FilamentChatPlugin::get();
 
-            $query->whereHas('participants', function ($q) use ($user, $source): void {
+            $participantModels = collect($this->sourceKeys)
+                ->map(fn (string $key): ?ChatSource => $plugin->getSource($key))
+                ->filter()
+                ->map(fn (ChatSource $source): string => $source->getParticipantModel())
+                ->unique()
+                ->values()
+                ->all();
+
+            $query->whereHas('participants', function ($q) use ($user, $participantModels): void {
                 $q->where(function ($q) use ($user): void {
                     $q->where('participantable_id', '!=', $user->getKey())
                         ->orWhere('participantable_type', '!=', $user->getMorphClass());
-                })->whereHasMorph('participantable', [$source->getParticipantModel()], function ($q): void {
+                })->whereHasMorph('participantable', $participantModels, function ($q): void {
                     $q->where('name', 'like', "%{$this->search}%");
                 });
             });
@@ -226,11 +235,24 @@ class ChatList extends Component implements HasActions, HasForms
 
     public function getSource(): ?ChatSource
     {
-        return FilamentChatPlugin::get()->getSource($this->sourceKey);
+        if (count($this->sourceKeys) !== 1) {
+            return null;
+        }
+
+        return FilamentChatPlugin::get()->getSource($this->sourceKeys[0]);
+    }
+
+    public function sourceFor(string $source): ?ChatSource
+    {
+        return FilamentChatPlugin::get()->getSource($source);
     }
 
     public function canCreateConversation(): bool
     {
+        if (count($this->sourceKeys) !== 1) {
+            return false;
+        }
+
         $source = $this->getSource();
 
         return $source !== null && $source->allowsNewConversations();
