@@ -17,7 +17,8 @@ use ZEDMagdy\FilamentChat\FilamentChatPlugin;
 
 class ChatWindow extends Component
 {
-    public string $sourceKey = '';
+    /** @var array<int, string> */
+    public array $sourceKeys = [];
 
     public ?int $conversationId = null;
 
@@ -26,9 +27,24 @@ class ChatWindow extends Component
     #[On('conversation-selected')]
     public function loadConversation(int $conversationId): void
     {
+        $conversation = FilamentChat::getConversationModel()::find($conversationId);
+
+        if ($conversation === null || ! $this->isConversationInScope($conversation)) {
+            return;
+        }
+
         $this->conversationId = $conversationId;
         $this->page = 1;
         $this->markAsRead();
+    }
+
+    public function isConversationInScope(Model $conversation): bool
+    {
+        if ($this->sourceKeys === []) {
+            return true;
+        }
+
+        return in_array($conversation->source, $this->sourceKeys, true);
     }
 
     public function loadMore(): void
@@ -112,7 +128,13 @@ class ChatWindow extends Component
 
     public function getSource(): ?ChatSource
     {
-        return FilamentChatPlugin::get()->getSource($this->sourceKey);
+        $conversation = $this->conversation;
+
+        if ($conversation === null) {
+            return null;
+        }
+
+        return FilamentChatPlugin::get()->getSource($conversation->source);
     }
 
     public function getPollingInterval(): string
