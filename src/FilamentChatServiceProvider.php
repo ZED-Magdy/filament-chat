@@ -7,6 +7,7 @@ namespace ZEDMagdy\FilamentChat;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use ZEDMagdy\FilamentChat\Commands\MakeChatAggregateCommand;
 use ZEDMagdy\FilamentChat\Commands\MakeChatSourceCommand;
 use ZEDMagdy\FilamentChat\Livewire\ChatList;
 use ZEDMagdy\FilamentChat\Livewire\ChatSearch;
@@ -24,6 +25,7 @@ class FilamentChatServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasCommand(MakeChatSourceCommand::class)
+            ->hasCommand(MakeChatAggregateCommand::class)
             ->hasMigrations([
                 'create_chat_conversations_table',
                 'create_chat_participants_table',

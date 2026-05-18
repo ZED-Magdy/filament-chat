@@ -28,11 +28,15 @@ class ChatList extends Component implements HasActions, HasForms
     use InteractsWithActions;
     use InteractsWithForms;
 
-    public string $sourceKey = '';
+    /** @var array<int, string> */
+    public array $sourceKeys = [];
 
     public string $search = '';
 
     public ?int $selectedConversationId = null;
+
+    /** @var array<string, ChatSource|null> */
+    private array $resolvedSources = [];
 
     #[On('chat-search-updated')]
     public function updateSearch(string $search): void
@@ -60,6 +64,10 @@ class ChatList extends Component implements HasActions, HasForms
             ->modalHeading('Start a Conversation')
             ->modalWidth('md')
             ->schema(function () use ($source): array {
+                if ($source === null) {
+                    return [];
+                }
+
                 $user = filament()->auth()->user();
                 $participantModel = $source->getParticipantModel();
                 $participantQuery = $source->getAvailableParticipantsQuery();
@@ -202,23 +210,35 @@ class ChatList extends Component implements HasActions, HasForms
         $conversationModel = FilamentChat::getConversationModel();
 
         $query = $conversationModel::query()
-            ->forSource($this->sourceKey)
+            ->forSources($this->sourceKeys)
             ->forParticipant($user)
             ->withUnreadCount($user)
             ->with(['participants.participantable', 'latestMessage'])
             ->latest('updated_at');
 
         if (filled($this->search)) {
-            $source = FilamentChatPlugin::get()->getSource($this->sourceKey);
+            $plugin = FilamentChatPlugin::get();
 
-            $query->whereHas('participants', function ($q) use ($user, $source): void {
-                $q->where(function ($q) use ($user): void {
-                    $q->where('participantable_id', '!=', $user->getKey())
-                        ->orWhere('participantable_type', '!=', $user->getMorphClass());
-                })->whereHasMorph('participantable', [$source->getParticipantModel()], function ($q): void {
-                    $q->where('name', 'like', "%{$this->search}%");
+            $participantModels = collect($this->sourceKeys)
+                ->map(fn (string $key): ?ChatSource => $plugin->getSource($key))
+                ->filter()
+                ->map(fn (ChatSource $source): string => $source->getParticipantModel())
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($participantModels === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereHas('participants', function ($q) use ($user, $participantModels): void {
+                    $q->where(function ($q) use ($user): void {
+                        $q->where('participantable_id', '!=', $user->getKey())
+                            ->orWhere('participantable_type', '!=', $user->getMorphClass());
+                    })->whereHasMorph('participantable', $participantModels, function ($q): void {
+                        $q->where('name', 'like', "%{$this->search}%");
+                    });
                 });
-            });
+            }
         }
 
         return $query->limit(config('filament-chat.conversations_per_page', 25))->get();
@@ -226,11 +246,28 @@ class ChatList extends Component implements HasActions, HasForms
 
     public function getSource(): ?ChatSource
     {
-        return FilamentChatPlugin::get()->getSource($this->sourceKey);
+        if (count($this->sourceKeys) !== 1) {
+            return null;
+        }
+
+        return FilamentChatPlugin::get()->getSource($this->sourceKeys[0]);
+    }
+
+    public function sourceFor(string $source): ?ChatSource
+    {
+        if (! array_key_exists($source, $this->resolvedSources)) {
+            $this->resolvedSources[$source] = FilamentChatPlugin::get()->getSource($source);
+        }
+
+        return $this->resolvedSources[$source];
     }
 
     public function canCreateConversation(): bool
     {
+        if (count($this->sourceKeys) !== 1) {
+            return false;
+        }
+
         $source = $this->getSource();
 
         return $source !== null && $source->allowsNewConversations();

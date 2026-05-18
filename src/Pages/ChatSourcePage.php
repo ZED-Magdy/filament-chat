@@ -54,4 +54,12 @@ abstract class ChatSourcePage extends Page
     {
         return static::$chatSourceKey;
     }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getSourceKeys(): array
+    {
+        return [static::$chatSourceKey];
+    }
 }

@@ -62,6 +62,14 @@ class Conversation extends Model
         return $query->where('source', $source);
     }
 
+    /**
+     * @param  array<int, string>  $sources
+     */
+    public function scopeForSources(Builder $query, array $sources): Builder
+    {
+        return $query->whereIn('source', $sources);
+    }
+
     public function scopeForParticipant(Builder $query, Model $user): Builder
     {
         return $query->whereHas('participants', function (Builder $q) use ($user): void {

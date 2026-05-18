@@ -7,10 +7,10 @@
             $displayName = $this->conversation->isGroup()
                 ? $this->conversation->name
                 : ($otherParticipant
-                    ? $source->getParticipantDisplayName($otherParticipant->participantable)
+                    ? $source?->getParticipantDisplayName($otherParticipant->participantable) ?? 'Unknown'
                     : 'Unknown');
             $avatarUrl = (! $this->conversation->isGroup() && $otherParticipant)
-                ? $source->getParticipantAvatarUrl($otherParticipant->participantable)
+                ? $source?->getParticipantAvatarUrl($otherParticipant->participantable)
                 : null;
             $othersLastReadAt = $this->othersLastReadAt;
         @endphp
@@ -20,7 +20,7 @@
             <x-filament-chat::avatar :name="$displayName" :url="$avatarUrl" class="h-10 w-10" />
             <div class="min-w-0 flex-1">
                 <h3 class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ $displayName }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $source->getLabel() }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $source?->getLabel() }}</p>
             </div>
         </div>
 

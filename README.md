@@ -282,7 +282,107 @@ Register both in your panel:
 )
 ```
 
-### 6. Creating Conversations from the UI
+### 6. Aggregate Chat Sources ("All Messages")
+
+An **aggregate page** presents a single read + reply inbox spanning an explicit
+set of source keys. It does not support starting new conversations (use the
+per-source pages for that); each row shows a badge indicating which source the
+conversation belongs to.
+
+Generate one with the `make:chat-aggregate` command:
+
+```bash
+# Interactive (prompts for name and source keys)
+php artisan make:chat-aggregate
+
+# Non-interactive
+php artisan make:chat-aggregate "All Messages" --sources=staff,support --no-interaction
+```
+
+This creates `app/Chat/AllMessagesAggregateChatSource.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Chat;
+
+use App\Filament\Pages\AllMessagesChatPage;
+use ZEDMagdy\FilamentChat\AggregateChatSource;
+
+class AllMessagesAggregateChatSource extends AggregateChatSource
+{
+    public function getKey(): string
+    {
+        return 'all-messages';
+    }
+
+    public function getLabel(): string
+    {
+        return 'All Messages';
+    }
+
+    public function getIcon(): string
+    {
+        return 'heroicon-o-inbox-stack';
+    }
+
+    public function getPageClass(): string
+    {
+        return AllMessagesChatPage::class;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getSourceKeys(): array
+    {
+        return ['staff', 'support'];
+    }
+}
+```
+
+and `app/Filament/Pages/AllMessagesChatPage.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Pages;
+
+use ZEDMagdy\FilamentChat\Pages\AggregateChatSourcePage;
+
+class AllMessagesChatPage extends AggregateChatSourcePage
+{
+    protected static string $aggregateKey = 'all-messages';
+}
+```
+
+Register it on the plugin alongside your sources:
+
+```php
+use App\Chat\AllMessagesAggregateChatSource;
+use App\Chat\StaffChatSource;
+use App\Chat\SupportChatSource;
+use ZEDMagdy\FilamentChat\FilamentChatPlugin;
+
+FilamentChatPlugin::make()
+    ->sources([
+        StaffChatSource::class,
+        SupportChatSource::class,
+    ])
+    ->aggregates([
+        AllMessagesAggregateChatSource::class,
+    ])
+```
+
+> The source keys listed in `getSourceKeys()` must match the `getKey()` of
+> registered `ChatSource` classes. Unknown keys are ignored. New-conversation
+> creation is intentionally unavailable on aggregate pages.
+
+### 7. Creating Conversations from the UI
 
 Users can start new conversations by clicking the **+** button in the chat sidebar. This opens a modal where they select a participant (or multiple for group chats).
 
@@ -304,7 +404,7 @@ public function allowsNewConversations(): bool
 
 This is useful for system-managed chats where conversations are created programmatically (e.g. a support ticket system that auto-creates a chat per ticket).
 
-### 7. Creating Conversations Programmatically
+### 8. Creating Conversations Programmatically
 
 ```php
 use ZEDMagdy\FilamentChat\Models\Conversation;
@@ -352,7 +452,7 @@ Message::create([
 ]);
 ```
 
-### 8. Working with Attachments
+### 9. Working with Attachments
 
 The `Message` model uses Spatie Media Library. Attachments are stored in the `chat-attachments` media collection:
 
@@ -501,6 +601,12 @@ composer test
 ```
 
 ## Changelog
+
+> **Upgrade note:** The internal Livewire components now use a `source-keys`
+> array prop instead of `source-key`. If you overrode
+> `filament-chat::pages.chat-source` or embedded `chat-list`/`chat-window`/
+> `chat-search` directly, pass `:source-keys="$this->getSourceKeys()"` instead
+> of `:source-key`.
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 

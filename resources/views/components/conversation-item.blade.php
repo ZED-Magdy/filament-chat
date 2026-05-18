@@ -1,4 +1,4 @@
-@props(['conversation', 'selected' => false, 'source' => null])
+@props(['conversation', 'selected' => false, 'source' => null, 'showSourceBadge' => false])
 
 @php
     $user = filament()->auth()->user();
@@ -43,7 +43,7 @@
         <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
             {{ $lastMessage?->body ?? 'No messages yet' }}
         </p>
-        @if ($source)
+        @if ($source && $showSourceBadge)
             <span
                 class="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
                 style="background-color: var(--primary-600);"
