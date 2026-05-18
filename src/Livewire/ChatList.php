@@ -35,6 +35,9 @@ class ChatList extends Component implements HasActions, HasForms
 
     public ?int $selectedConversationId = null;
 
+    /** @var array<string, ChatSource|null> */
+    private array $resolvedSources = [];
+
     #[On('chat-search-updated')]
     public function updateSearch(string $search): void
     {
@@ -61,6 +64,10 @@ class ChatList extends Component implements HasActions, HasForms
             ->modalHeading('Start a Conversation')
             ->modalWidth('md')
             ->schema(function () use ($source): array {
+                if ($source === null) {
+                    return [];
+                }
+
                 $user = filament()->auth()->user();
                 $participantModel = $source->getParticipantModel();
                 $participantQuery = $source->getAvailableParticipantsQuery();
@@ -220,14 +227,18 @@ class ChatList extends Component implements HasActions, HasForms
                 ->values()
                 ->all();
 
-            $query->whereHas('participants', function ($q) use ($user, $participantModels): void {
-                $q->where(function ($q) use ($user): void {
-                    $q->where('participantable_id', '!=', $user->getKey())
-                        ->orWhere('participantable_type', '!=', $user->getMorphClass());
-                })->whereHasMorph('participantable', $participantModels, function ($q): void {
-                    $q->where('name', 'like', "%{$this->search}%");
+            if ($participantModels === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereHas('participants', function ($q) use ($user, $participantModels): void {
+                    $q->where(function ($q) use ($user): void {
+                        $q->where('participantable_id', '!=', $user->getKey())
+                            ->orWhere('participantable_type', '!=', $user->getMorphClass());
+                    })->whereHasMorph('participantable', $participantModels, function ($q): void {
+                        $q->where('name', 'like', "%{$this->search}%");
+                    });
                 });
-            });
+            }
         }
 
         return $query->limit(config('filament-chat.conversations_per_page', 25))->get();
@@ -244,7 +255,11 @@ class ChatList extends Component implements HasActions, HasForms
 
     public function sourceFor(string $source): ?ChatSource
     {
-        return FilamentChatPlugin::get()->getSource($source);
+        if (! array_key_exists($source, $this->resolvedSources)) {
+            $this->resolvedSources[$source] = FilamentChatPlugin::get()->getSource($source);
+        }
+
+        return $this->resolvedSources[$source];
     }
 
     public function canCreateConversation(): bool
