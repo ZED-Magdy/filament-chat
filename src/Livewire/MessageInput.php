@@ -72,7 +72,12 @@ class MessageInput extends Component implements HasForms
     {
         $data = $this->form->getState();
 
-        if (blank($data['body'] ?? null) && empty($data['attachments'] ?? [])) {
+        // SpatieMediaLibraryFileUpload is dehydrated(false), so uploaded files
+        // never appear in the form's dehydrated state. Read attachments from
+        // the raw component state instead so media-only messages can be sent.
+        $attachments = $this->data['attachments'] ?? [];
+
+        if (blank($data['body'] ?? null) && empty($attachments)) {
             return;
         }
 
