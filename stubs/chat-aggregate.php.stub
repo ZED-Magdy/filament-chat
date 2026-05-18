@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ pageClass }};
+use ZEDMagdy\FilamentChat\AggregateChatSource;
+
+class {{ class }} extends AggregateChatSource
+{
+    public function getKey(): string
+    {
+        return '{{ key }}';
+    }
+
+    public function getLabel(): string
+    {
+        return '{{ label }}';
+    }
+
+    public function getIcon(): string
+    {
+        return 'heroicon-o-inbox-stack';
+    }
+
+    public function getPageClass(): string
+    {
+        return {{ pageBasename }}::class;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getSourceKeys(): array
+    {
+        return [{{ sourceKeys }}];
+    }
+}
