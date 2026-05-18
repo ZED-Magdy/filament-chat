@@ -12,6 +12,9 @@ class FilamentChatPlugin implements Plugin
     /** @var array<class-string<ChatSource>> */
     protected array $sources = [];
 
+    /** @var array<class-string<AggregateChatSource>> */
+    protected array $aggregates = [];
+
     public static function make(): static
     {
         return app(static::class);
@@ -85,12 +88,56 @@ class FilamentChatPlugin implements Plugin
         return null;
     }
 
+    /**
+     * @param  array<class-string<AggregateChatSource>>  $aggregates
+     */
+    public function aggregates(array $aggregates): static
+    {
+        $this->aggregates = $aggregates;
+
+        return $this;
+    }
+
+    /**
+     * @return array<class-string<AggregateChatSource>>
+     */
+    public function getAggregates(): array
+    {
+        return $this->aggregates;
+    }
+
+    /**
+     * @return array<AggregateChatSource>
+     */
+    public function getResolvedAggregates(): array
+    {
+        return array_map(
+            fn (string $aggregateClass): AggregateChatSource => app($aggregateClass),
+            $this->aggregates,
+        );
+    }
+
+    public function getAggregate(string $key): ?AggregateChatSource
+    {
+        foreach ($this->getResolvedAggregates() as $aggregate) {
+            if ($aggregate->getKey() === $key) {
+                return $aggregate;
+            }
+        }
+
+        return null;
+    }
+
     public function register(Panel $panel): void
     {
         $pages = [];
 
         foreach ($this->getResolvedSources() as $source) {
             $pages[] = $source->getPageClass();
+        }
+
+        foreach ($this->getResolvedAggregates() as $aggregate) {
+            $pages[] = $aggregate->getPageClass();
         }
 
         $panel->pages($pages);
