@@ -15,6 +15,9 @@ use ZEDMagdy\FilamentChat\ChatSource;
 use ZEDMagdy\FilamentChat\FilamentChat;
 use ZEDMagdy\FilamentChat\FilamentChatPlugin;
 
+/**
+ * @property-read Model|null $conversation
+ */
 class ChatWindow extends Component
 {
     /** @var array<int, string> */
@@ -44,7 +47,7 @@ class ChatWindow extends Component
             return true;
         }
 
-        return in_array($conversation->source, $this->sourceKeys, true);
+        return in_array((string) $conversation->getAttribute('source'), $this->sourceKeys, true);
     }
 
     public function loadMore(): void
@@ -134,7 +137,7 @@ class ChatWindow extends Component
             return null;
         }
 
-        return FilamentChatPlugin::get()->getSource($conversation->source);
+        return FilamentChatPlugin::get()->getSource((string) $conversation->getAttribute('source'));
     }
 
     public function getPollingInterval(): string
